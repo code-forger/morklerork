@@ -1,6 +1,6 @@
 # MorkleRork
 
-MorkleRork is a programming language invented to be and very very easy to parse, lex, and execute, while having _some_ modern features.
+MorkleRork is a programming language invented to be very very easy to parse, lex, and execute, while having _some_ modern features.
 
 It was invented so I could learn golang, and therefore this repo contains a MorkleRork interpreter written in golang
 
@@ -8,7 +8,7 @@ It was invented so I could learn golang, and therefore this repo contains a Mork
 
 MorkelRork programs are constructed of lines of code
 
-each line can contain exactly one **Command**, and each **Command** is contained entirely on one line of code
+Each line can contain exactly one **Command**, and each **Command** is contained entirely on one line of code
 
 Each **Command** is made up of **Symbols**
 
@@ -24,7 +24,7 @@ Note: A blank line is also allowed in MorkelRork, and should simply be discarded
 
 For example, take the **CommandSymbol** `log`, which prints to stdout the result of the provided **Expression**
 
-Given the IntLiteral **Symbol** 5 like so:
+Given the **IntLiteral** **Symbol** 5 like so:
 
 ```morklerork
 log 5
@@ -87,9 +87,9 @@ any symbol composed only of numbers. E.G. this line should be lexed as 5 IntLite
 `1 143 13426534637 2 4`
 
 #### String Literals:
-everything bewteen an opening `'` and a closing `'`. E.G.
+everything between an opening `'` and a closing `'`. E.G.
 
-`'''` empty string
+`''` empty string
 
 `'Hello World!'` spaces are allowed
 
@@ -112,7 +112,7 @@ Any string of characters starting with `$` E.G.
 
 ## HeapAccessSymbols
 
-MorkleRork comes with an infinite heap of Values. This can be visualized as an array of boxes that can be any type.
+MorkleRork comes with an infinite heap of Values (the same way turing machines do, your interpreter/compiler may provide a limited heap. This can be visualized as an array of boxes that can be any type.
 
 You can access a box using `[` and `]` with a SingleExpression between that evaluates to an Int value. E.G.
 
@@ -140,9 +140,9 @@ E.G.
 
 `1 + 2 * 3` morkleRork follows BODMAS, so here 2 * 3 will be evaluated first
 
-`'hello '' + 'world'` you can add strings, for concatenation
+`'hello ' + 'world'` you can add strings, for concatenation
 
-`'Your name is '' + :name` adding a Variable to a string
+`'Your name is ' + :name` adding a Variable to a string
 
 ## Commands
 
@@ -170,7 +170,7 @@ new <VariableName> <Expression>
 
 The new command will create a new variable in the current scope by the given name, with the value resulting from the expression.
 
-If your reference a variable before it is created with `new` you will get an error at runtime
+If you reference a variable before it is created with `new` you will get an error at runtime
 
 Examples:
 
@@ -335,6 +335,7 @@ Operators of the same type execute left to right.
 
 Operators obey the following precedence (high operators execute first)
 
+```morklerork
 0: "&"
 1: "|"
 2: "=="
@@ -344,6 +345,8 @@ Operators obey the following precedence (high operators execute first)
 6: "-"
 7: "*"
 8: "/"
+```
+
 
 ### &
 
@@ -403,7 +406,26 @@ evaluates to the integer value of the mathematical operation
 
 Note: `/` always rounds down
 
-## Standard Library
+## System functions and Standard Library
 
-MorkleRork has a few more tricks up its sleave (coming soon)
+System functions will all be prefixed with a `#`. They are implemented by the intepreter to do things like interfacing with the operating system
 
+MorkleRork has a few more tricks up its sleeve that are coming soon, such as:
+* Read a string, character by character into the heap
+* Read characters one by one out of the heap into a string
+* Read another morklerork file into the current file (to allow some level of code management)
+* Receive stdin as a string
+* Receive the cli args as a string
+* Read a file as a string
+
+Standard Library functions are implemented _in_ MorkleRork, and so are interpreter independent.
+
+* A set of functions to initialize sections of the heap into a general memory allocation region supporting probably:
+  * `call $heap$init <Int SingleExpression | heap start address> <Int SingleExpression | heap size>`
+  * `call :address $heap$new <Int Expression | number of cells>`
+  * `call $heap$free <Int Expression | address>`
+
+* Maybe a set of functions to implement common collections, such as Stacks, Queues, Maps, etc:
+  * `call :address $stack$create`
+  * `call $stack$push :address :value`
+  * `call :value $stack$pop :address`
