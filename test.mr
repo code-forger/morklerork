@@ -1,0 +1,146 @@
+log 'hello'
+log ' world!\n'
+
+new :val 123
+log 'h' + 123
+log '\n'
+log :val
+log '\n'
+log :val * 2
+log '\n'
+log :val / 3
+log '\n'
+log :val + 2
+log '\n'
+log :val - 2
+log '\n'
+log '\n'
+
+if '1' == '1'
+    log 'Yes\n'
+    log 2
+
+log '\n'
+log '\n'
+
+if '1' == '2' | 1 == 1 & 5 < 3
+    log 'non'
+
+= :val 5
+while 0 < :val
+    log :val
+    log '\n'
+    new :n :val
+    log :n * 6
+    log '\n'
+    = :val :val - 1
+log :val
+log '\n'
+log '\n'
+new :sval '123'
+log :sval + 2
+log '\n'
+
+log 1 * 2 + 3
+
+
+log '\nh' + 123 + 'h'
+
+new :a '5'
+new :b :a
+= :b 3
+log '\n' + :a + ' ' + :b
+
+program $print :str
+    log '' + :str + '\n'
+
+call $print '123'
+
+program $stars :count
+    if :count != 0
+        new :i 0
+        while :i < :count
+            log '*'
+            = :i :i + 1
+        call $print ''
+        new :nextCount :count - 1
+        call $stars :nextCount
+
+call $stars 5
+
+new :ret 0
+
+program $do
+    return 5
+
+call :ret $do
+call $print :ret
+
+program $fib :num
+    if :num < 3
+        return 1
+    new :fib1 0
+    new :fib2 0
+    new :nextNum :num - 1
+    call :fib1 $fib :nextNum
+    = :nextNum :num - 2
+    call :fib2 $fib :nextNum
+    return :fib1 + :fib2
+
+program $factorial :num
+    if :num == 1
+        return 1
+    new :fact 0
+    new :nextNum :num - 1
+    call :fact $factorial :nextNum
+    return :fact * :num
+
+program $get :num
+    if :num < 4
+        return 'lessThan'
+    return 'moreThan'
+
+new :count 11
+new :i 0
+while :i < :count
+    call :ret $fib :i
+    call $print :ret
+    = :i :i + 1
+
+call :ret $factorial 5
+call $print :ret
+call :ret $factorial 6
+call $print :ret
+call :ret $factorial 7
+call $print :ret
+
+program $pow :a :b
+    new :ret 1
+    while 0 < :b
+        = :ret :ret * :a
+        = :b :b - 1
+    return :ret
+
+
+call :ret $pow 2 32
+call $print :ret
+
+= [0] 4
+log [0]
+
+= [4] 'Oh No'
+log [[0]]
+
+= [0] '\n'
+
+log 9 / 2
+log [0]
+log 7 / 2
+log [0]
+log 5 / 2
+log [0]
+log 20 / 3
+log [0]
+
+log 'Im a string\n'
+log 'I\'m a string\n'
