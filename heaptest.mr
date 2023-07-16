@@ -1,0 +1,110 @@
+new :HEAP_START 100
+call $heap$init :HEAP_START 100
+
+log 'First we are going to allocate our entire heap, then look at the heap dump'
+new :arraySize 4
+new :arrayAddress :NULL_PTR
+call :arrayAddress $heap$new :HEAP_START :arraySize
+if :arrayAddress == :NULL_PTR
+    log 'Failed to allocate, there should have been enough heap space for this :(\n'
+    return
+new :arrayPtr :arrayAddress
+
+while :arrayPtr < :arrayAddress + :arraySize
+    = [:arrayPtr] '* ' + :arrayPtr
+    = :arrayPtr :arrayPtr + 1
+
+# allocate another identical array, it should be placed at about 110
+
+new :array1Address :NULL_PTR
+call :array1Address $heap$new :HEAP_START :arraySize
+if :array1Address == :NULL_PTR
+    log 'Failed to allocate, there should have been enough heap space for this :(\n'
+    return
+new :array1Ptr :array1Address
+
+while :array1Ptr < :array1Address + :arraySize
+    = [:array1Ptr] '* ' + :array1Ptr
+    = :array1Ptr :array1Ptr + 1
+
+# Lets quickly allocate the rest of the heap, storing all the addressed in
+# non-managed cells
+new :ptrAddress 0
+= [:ptrAddress] :NULL_PTR
+new :didAllocateMemory ?true
+while :didAllocateMemory
+# Ahh my favourite, storing a pointer 'in' a pointer, this wont get confusing
+    new :ret :NULL_PTR
+    call :ret $heap$new :HEAP_START :arraySize
+    = [:ptrAddress] :ret
+    if [:ptrAddress] == :NULL_PTR
+        = :didAllocateMemory ?false
+    = :ptrAddress :ptrAddress + 1
+# Keep the tail set to :NULL_PTR so we can detect it later
+    = [:ptrAddress] :NULL_PTR
+
+# If our maths is right, (and the heap block size has not changed)
+# There is enough space for one more _3_ long allocation
+
+new :smallArrayAddress :NULL_PTR
+new :smallArraySize 3
+call :smallArrayAddress $heap$new :HEAP_START :smallArraySize
+if :smallArrayAddress == :NULL_PTR
+    log 'Failed to allocate, there should have been enough heap space for this :(\n'
+    return
+new :smallArrayPtr :smallArrayAddress
+
+while :smallArrayPtr < :smallArrayAddress + :smallArraySize
+    = [:smallArrayPtr] '* ' + :smallArrayPtr
+    = :smallArrayPtr :smallArrayPtr + 1
+
+program $heapDump :HEAP_START
+    log '\n==== HEAP DUMP ====\n| '
+    new :fullHeapPtr :HEAP_START
+    while :fullHeapPtr < :HEAP_START + 100
+        log '' + [:fullHeapPtr] + '\t| '
+        = :fullHeapPtr :fullHeapPtr + 1
+        new :alignedFullHeapPtr :fullHeapPtr - 100
+        if :alignedFullHeapPtr % 14 == 0
+            log '\n| '
+
+    log '\n==== HEAP DUMP END ====\n\n'
+
+call $heapDump :HEAP_START
+log 'Note that all values we inserted into the heap start with a *.\n'
+log 'Therefore the numbers and bools that dont, are the HeapBlock structure\n'
+log 'that the memory manager uses.\n\n'
+log 'The heap dump was wrapped intentionally to line up our allocations,\n'
+log 'which are each 7 cells long, given 3 cells for the HeapBlock, and 4 cells for us\n'
+
+log '\n\nnow lets clean up again, and look at the dump again'
+
+call $heap$free :HEAP_START :arrayAddress
+call $heap$free :HEAP_START :array1Address
+call $heap$free :HEAP_START :smallArrayAddress
+new :cleanerPtrAddress 0
+while [:cleanerPtrAddress] != :NULL_PTR
+    call $heap$free :HEAP_START [:cleanerPtrAddress]
+    = :cleanerPtrAddress :cleanerPtrAddress + 1
+
+call $heapDump :HEAP_START
+
+log 'Note, not much changed, all the blocks are still there, but:\n'
+log 'A) The are all unallocated\n'
+log 'B) The first block properly points at the last block\n'
+log 'this means everything was freed properly, and we should now be able to allocate the full space\n'
+
+new :fullArraySize 94
+new :fullArrayAddress :NULL_PTR
+call :fullArrayAddress $heap$new :HEAP_START :fullArraySize
+if :fullArrayAddress == :NULL_PTR
+    log 'Failed to allocate, there should have been enough heap space for this :(\n'
+    return
+new :fullArrayPtr :fullArrayAddress
+
+while :fullArrayPtr < :fullArrayAddress + :fullArraySize
+    = [:fullArrayPtr] '* ' + :fullArrayPtr - :fullArrayAddress
+    = :fullArrayPtr :fullArrayPtr + 1
+
+
+call $heapDump :HEAP_START

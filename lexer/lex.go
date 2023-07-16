@@ -141,6 +141,8 @@ func lexSymbol(symbol string) symbols.Symbol {
 		return symbols.BinaryOperator{BinaryOperatorType: symbols.TimesOperator}
 	case "/":
 		return symbols.BinaryOperator{BinaryOperatorType: symbols.DivideOperator}
+	case "%":
+		return symbols.BinaryOperator{BinaryOperatorType: symbols.ModuloOperator}
 	// literals and user defined symbols
 	default:
 		return lexLiteralsAndUserDefinedSymbols(symbol)
@@ -154,6 +156,9 @@ func Lex(programString string) [][]symbols.Symbol {
 	programLines := strings.Split(programString, "\n")
 	for _, line := range programLines {
 		if line == "" { // ignore blank lines
+			continue
+		}
+		if line[0] == '#' { // ignore comments
 			continue
 		}
 		indent, unindentedLine := lexIndent([]rune(line))

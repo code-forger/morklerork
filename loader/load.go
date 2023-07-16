@@ -2,16 +2,22 @@ package loader
 
 import (
 	"log"
+	"morklerork/stdlib"
 	"os"
 )
 
 func Load() string {
-	programName := os.Args[1]
+	programNames := os.Args[1:]
 
-	content, err := os.ReadFile(programName)
-	if err != nil {
-		log.Fatal(err)
+	programString := ""
+
+	for _, name := range programNames {
+		content, err := os.ReadFile(name)
+		if err != nil {
+			log.Fatal(err)
+		}
+		programString += "\n" + string(content)
 	}
 
-	return string(content)
+	return stdlib.LoadStdLibFiles() + programString
 }

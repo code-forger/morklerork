@@ -98,11 +98,15 @@ func executeBinaryOperatorOnString(lhs ExpressionResult, rhs ExpressionResult, o
 		switch operatorType {
 		case symbols.PlusOperator:
 			return ExpressionResult{String: lhs.String + strconv.Itoa(rhs.Int), Type: String}, nil
+		case symbols.ModuloOperator:
+			return ExpressionResult{String: string([]rune(lhs.String)[rhs.Int]), Type: String}, nil
 		default:
 			return ExpressionResult{}, errors.New("Cannot use " + symbols.BinaryOperatorTypeNames[operatorType] + " on string and int")
 		}
 	case Bool:
 		switch operatorType {
+		case symbols.PlusOperator:
+			return ExpressionResult{String: lhs.String + strconv.FormatBool(rhs.Bool), Type: String}, nil
 		default:
 			return ExpressionResult{}, errors.New("Cannot use " + symbols.BinaryOperatorTypeNames[operatorType] + " on string and bool")
 		}
@@ -134,6 +138,8 @@ func executeBinaryOperatorOnInt(lhs ExpressionResult, rhs ExpressionResult, oper
 			return ExpressionResult{Int: lhs.Int * rhs.Int, Type: Int}, nil
 		case symbols.DivideOperator:
 			return ExpressionResult{Int: lhs.Int / rhs.Int, Type: Int}, nil
+		case symbols.ModuloOperator:
+			return ExpressionResult{Int: lhs.Int % rhs.Int, Type: Int}, nil
 		default:
 			return ExpressionResult{}, errors.New("Cannot use '" + symbols.BinaryOperatorTypeNames[operatorType] + "' on two ints")
 		}
@@ -165,6 +171,10 @@ func executeBinaryOperatorOnBool(lhs ExpressionResult, rhs ExpressionResult, ope
 			return ExpressionResult{Bool: lhs.Bool && rhs.Bool, Type: Bool}, nil
 		case symbols.LogicalOrOperator:
 			return ExpressionResult{Bool: lhs.Bool || rhs.Bool, Type: Bool}, nil
+		case symbols.EqualOperator:
+			return ExpressionResult{Bool: lhs.Bool == rhs.Bool, Type: Bool}, nil
+		case symbols.NotEqualOperator:
+			return ExpressionResult{Bool: lhs.Bool != rhs.Bool, Type: Bool}, nil
 		default:
 			return ExpressionResult{}, errors.New("Cannot use " + symbols.BinaryOperatorTypeNames[operatorType] + " on two bools")
 		}

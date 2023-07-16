@@ -57,6 +57,7 @@ const (
 	MinusOperator
 	DivideOperator
 	TimesOperator
+	ModuloOperator
 )
 
 var BinaryOperatorTypeNames = map[BinaryOperatorType]string{
@@ -69,6 +70,7 @@ var BinaryOperatorTypeNames = map[BinaryOperatorType]string{
 	6: "-",
 	7: "*",
 	8: "/",
+	9: "%",
 }
 
 type BinaryOperator struct {

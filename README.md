@@ -57,6 +57,9 @@ log 'I\'m out of the block\n'
 
 Note: For simplicity of lexing, you can consider the leading whitespace (that defines **Blocks**) to be a Symbol of its own
 
+Finally, MorkleRork intepreters and compilers should take multiple files as inputs, and simply concatenate them, allowing for earlier files to define programs and variables for later files to use
+
+Note: There is a TextMate bundle for MorkleRork in this repo, which atleast provides some _simple_ syntax highlighting, and will let your IDE auto complete function names, etc.
 ## Symbols
 
 As mentioned, each symbol can be ascertained by splitting a line on spaces (Taking care of string literals as the 1 special case)
@@ -345,6 +348,7 @@ Operators obey the following precedence (high operators execute first)
 6: "-"
 7: "*"
 8: "/"
+9: "%"
 ```
 
 
@@ -406,24 +410,69 @@ evaluates to the integer value of the mathematical operation
 
 Note: `/` always rounds down
 
+### %
+`<Int> % <Int>`
+
+evaluates to the remainder there would be after performing an integer `/`
+
+`<String> % <Int>`
+
+evaluates to a string containing a single character at the position of the string
+
 ## System functions and Standard Library
 
+### A Managed Heap
+
+The standard library comes with 3 functions for creating and using a 'C like' heap manager
+
+Note: The heap has no memory protection system, so if you pass an incorrect address to any of its function, it will likely stomp memory, and maybe get itself in an infinite loop.
+
+Furthermore, if you write into a cell not allocated to you, you risk destroying the heaps internal structure
+
+#### $heap$init
+```morkleRork
+call $heap$init <Int SingleExpression | heapStartAddress> <Int SingleExpression | heapSize>
+# No Return
+# heapStartAddress: The first address you want the managed heap to use, useful if you are using some of the cells for your own global storage
+# heapSize: The number of cells to give to the managed heap
+```
+
+This function will initialize a set of cells as a 'heap'.
+
+Note: init immediately consumes 6 cells, in general every allocation you perform in the heap will consume 3 more cells. This is the overhead of a dynamic memory mangement system
+
+This function must be called before $heap$new or $heap$free
+
+#### $heap$new
+```morkleRork
+call <Int Address> $heap$new <Int SingleExpression | heapStartAddress> <Int SingleExpression | size>
+# returns: A heap address of the first cell allocated to you
+# heapStartAddress: The same start address as passed to $heap$init, This allows you to init and interact with multiple managed heaps
+# size: the number of contiguous cells you want
+```
+
+This function will allocate some contiguous memory to you, and return it to you
+
+
+#### $heap$free
+```morkleRork
+call $heap$new <Int SingleExpression | heapStartAddress> <Int SingleExpression | address>
+# No Return
+# heapStartAddress: The same start address as passed to $heap$init, This allows you to init and interact with multiple managed heaps
+# address: The address that was returned to you from $heap$new
+```
+
+This function will free some memory, allowing it to be re-allocated later
+
+### Future plans for the ststem functions and Standard Library
 System functions will all be prefixed with a `#`. They are implemented by the intepreter to do things like interfacing with the operating system
 
 MorkleRork has a few more tricks up its sleeve that are coming soon, such as:
-* Read a string, character by character into the heap
-* Read characters one by one out of the heap into a string
-* Read another morklerork file into the current file (to allow some level of code management)
 * Receive stdin as a string
 * Receive the cli args as a string
 * Read a file as a string
 
 Standard Library functions are implemented _in_ MorkleRork, and so are interpreter independent.
-
-* A set of functions to initialize sections of the heap into a general memory allocation region supporting probably:
-  * `call $heap$init <Int SingleExpression | heap start address> <Int SingleExpression | heap size>`
-  * `call :address $heap$new <Int Expression | number of cells>`
-  * `call $heap$free <Int Expression | address>`
 
 * Maybe a set of functions to implement common collections, such as Stacks, Queues, Maps, etc:
   * `call :address $stack$create`

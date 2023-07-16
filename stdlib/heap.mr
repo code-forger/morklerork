@@ -1,0 +1,167 @@
+new :NULL_PTR 0 - 1
+
+# the heap header will have this layout, starting at heap__headerAddress
+# 0: heap size
+# 1: the address of the first heapBlock
+
+# heapBlocks will have this structure
+# 0 int previous heapBlockAddress
+# 1 bool is this block free or allocated
+# 2 int next heapBlockAddress
+# 3 <any> the first empty cell for consumer use
+
+# we can derive the width of a block by:
+# * taking the address of the next heapBlock
+# * subtract current heapBlock address
+# * subtract 3 to remove the width of the heapBlock itself
+
+
+program $heap__createHeapBlock :heapBlockAddress :previousHeapBlockAddress :isAllocated :nextHeapBlockAddress
+    new :address :heapBlockAddress
+    = [:heapBlockAddress] :previousHeapBlockAddress
+    = :heapBlockAddress :heapBlockAddress + 1
+    = [:heapBlockAddress] :isAllocated
+    = :heapBlockAddress :heapBlockAddress + 1
+    = [:heapBlockAddress] :nextHeapBlockAddress
+
+program $heap__isBlockAllocated :heapBlockAddress
+    new :isAllocatedAddress :heapBlockAddress + 1
+    return [:isAllocatedAddress]
+
+program $heap__setIsBlockAllocated :heapBlockAddress :isAllocated
+    new :isAllocatedAddress :heapBlockAddress + 1
+    = [:isAllocatedAddress] :isAllocated
+
+program $heap__getBlockSize :heapBlockAddress
+    new :heapBlockNextBlockAddressAddress :heapBlockAddress + 2
+    new :heapBlockNextBlockAddress [:heapBlockNextBlockAddressAddress]
+    return :heapBlockNextBlockAddress - :heapBlockAddress - 3
+
+program $heap__getNextBlockAddress :heapBlockAddress
+    new :NULL_PTR 0 - 1
+    new :heapBlockNextBlockAddressAddress :heapBlockAddress + 2
+    if :heapBlockNextBlockAddressAddress == :NULL_PTR
+        return :NULL_PTR
+    return [:heapBlockNextBlockAddressAddress]
+
+program $heap__setNextBlockAddress :heapBlockAddress :nextHeapBlockAddress
+    new :NULL_PTR 0 - 1
+    new :heapBlockNextBlockAddressAddress :heapBlockAddress + 2
+    if :heapBlockNextBlockAddressAddress == :NULL_PTR
+        return :NULL_PTR
+    = [:heapBlockNextBlockAddressAddress] :nextHeapBlockAddress
+
+program $heap__getPreviousBlockAddress :heapBlockAddress
+    new :NULL_PTR 0 - 1
+    if :heapBlockAddress == :NULL_PTR
+        return :NULL_PTR
+    return [:heapBlockAddress]
+
+program $heap__setPreviousBlockAddress :heapBlockAddress :previousHeapBlockAddress
+    new :NULL_PTR 0 - 1
+    if :heapBlockAddress == :NULL_PTR
+        return :NULL_PTR
+    = [:heapBlockAddress] :previousHeapBlockAddress
+
+# given the address of one block, and a size, insert a new heapBlock after that much space
+# being careful to link both the given block, and the given blocks next block, to the ne block
+# and vice verse
+program $heap__insertBlockAfter :heapBlockAddress :size
+    new :NULL_PTR 0 - 1
+    new :newBlocksAddress :heapBlockAddress + 3 + :size
+    new :nextBlockAddress :NULL_PTR
+    call :nextBlockAddress $heap__getNextBlockAddress :heapBlockAddress
+    call $heap__createHeapBlock :newBlocksAddress :heapBlockAddress ?false :nextBlockAddress
+    call $heap__setNextBlockAddress :heapBlockAddress :newBlocksAddress
+    call $heap__setPreviousBlockAddress :nextBlockAddress :newBlocksAddress
+
+
+program $heap$init :heapStartAddress :heapSize
+    new :NULL_PTR 0 - 1
+    new :endAddress :heapStartAddress + :heapSize - 3
+# We are going to start with 2 blocks, one is unallocated and the full width of the
+# new heap. The other is at the end, and acts allocated for convenience
+    call $heap__createHeapBlock :heapStartAddress :NULL_PTR ?false :endAddress
+    call $heap__createHeapBlock :endAddress :heapStartAddress ?true :NULL_PTR
+
+program $heap$new :heapStartAddress :size
+    new :NULL_PTR 0 - 1
+    if :heapStartAddress == :NULL_PTR
+        return :NULL_PTR
+
+    new :currentBlockAddress :heapStartAddress
+    new :isCurrentBlockAllocated ?true
+    while :isCurrentBlockAllocated == ?true
+        call :isCurrentBlockAllocated $heap__isBlockAllocated :currentBlockAddress
+# get next block
+        new :currentBlockSize 0
+        call :currentBlockSize $heap__getBlockSize :currentBlockAddress
+        if :isCurrentBlockAllocated == ?true | :currentBlockSize < :size
+            new :currentBlockNextBlockAddress :NULL_PTR
+            call :currentBlockNextBlockAddress $heap__getNextBlockAddress :currentBlockAddress
+            if :currentBlockNextBlockAddress == :NULL_PTR
+                return :NULL_PTR
+            = :currentBlockAddress :currentBlockNextBlockAddress
+
+        if :isCurrentBlockAllocated != ?true & :size - 1 < :currentBlockSize
+# by now :currentBlockAddress is an unallocated block with enough size
+
+# first, a special case where there is _not_ enough space for the requested size
+# _and_ another block in this empty space
+# Note: 4 on the next line because we want a new block in this space to have
+# at least _one_ cell of heap allocated to it
+            if :currentBlockSize - 4 < :size
+                call $heap__setIsBlockAllocated :currentBlockAddress ?true
+                return :currentBlockAddress + 3
+
+# if there _is_ space to split this region in two, do so
+            call $heap__insertBlockAfter :currentBlockAddress :size
+            call $heap__setIsBlockAllocated :currentBlockAddress ?true
+            return :currentBlockAddress + 3
+
+
+program $heap$free :heapStartAddress :address
+    new :NULL_PTR 0 - 1
+    if :heapStartAddress == :NULL_PTR
+        log 'Trying to call $heap$new before $heap$init'
+        return :NULL_PTR
+
+# Assuming the caller gave us back a valid address, its block is 3 cells prior
+    new :currentBlockAddress :address - 3
+    call $heap__setIsBlockAllocated :currentBlockAddress ?false
+
+# Try to merge blocks, In the 'best' case, both the previous and next block
+# are already unallocated, and we can delete two blocks here, to make one
+# larger block again
+    new :previousBlockAddress :NULL_PTR
+    call :previousBlockAddress $heap__getPreviousBlockAddress :currentBlockAddress
+
+    new :nextBlockAddress :NULL_PTR
+    call :nextBlockAddress $heap__getNextBlockAddress :currentBlockAddress
+
+# If the next block is unallocated, we are going to delete it, so we need _its_ next address
+    new :lastBlockAddress :NULL_PTR
+    call :lastBlockAddress $heap__getNextBlockAddress :nextBlockAddress
+
+# While trying to delete and re-link the _second_ time, we need to know
+# if we re-linked the _first_ time, easiest way, just store the target 'first' block
+    new :firstBlockAddress :currentBlockAddress
+
+# If the previous block is unallocated, 'skip' the current block in the block chain
+# Do nothing if this is the first block
+    if :previousBlockAddress != :NULL_PTR
+        new :isPreviousBlockAllocated ?true
+        call :isPreviousBlockAllocated $heap__isBlockAllocated :previousBlockAddress
+        if :isPreviousBlockAllocated == ?false
+            call $heap__setNextBlockAddress :previousBlockAddress :nextBlockAddress
+            call $heap__setPreviousBlockAddress :nextBlockAddress :previousBlockAddress
+            = :firstBlockAddress :previousBlockAddress
+
+# Now, if the next block is unallocated, 'skip' it too
+# Do nothing if this is the last block
+    if :previousBlockAddress != :NULL_PTR
+        new :isNextBlockAllocated ?true
+        call :isNextBlockAllocated $heap__isBlockAllocated :nextBlockAddress
+        if :isNextBlockAllocated == ?false
+            call $heap__setNextBlockAddress :firstBlockAddress :lastBlockAddress
+            call $heap__setPreviousBlockAddress :lastBlockAddress :firstBlockAddress

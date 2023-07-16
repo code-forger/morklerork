@@ -1,0 +1,2 @@
+log 'Program ' + 3 + '\n'
+log :ret
