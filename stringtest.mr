@@ -1,0 +1,17 @@
+new :len 0 - 1
+call :len $string$length ''
+log '' + :len + '\n'
+call :len $string$length 'Hello World!'
+log '' + :len + '\n'
+
+new :intFromString 0 - 1
+call :intFromString $string$toInt '1993'
+log '' + :intFromString + '\n'
+log :intFromString - 2
+log '\n'
+
+
+call :intFromString $string$toInt '19BAD93'
+log '' + :intFromString + '\n'
+log :intFromString - 2
+log '\n'

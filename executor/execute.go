@@ -100,6 +100,8 @@ func executeBinaryOperatorOnString(lhs ExpressionResult, rhs ExpressionResult, o
 			return ExpressionResult{String: lhs.String + strconv.Itoa(rhs.Int), Type: String}, nil
 		case symbols.ModuloOperator:
 			return ExpressionResult{String: string([]rune(lhs.String)[rhs.Int]), Type: String}, nil
+		case symbols.LTOperator:
+			return ExpressionResult{Bool: len(lhs.String) < rhs.Int, Type: Bool}, nil
 		default:
 			return ExpressionResult{}, errors.New("Cannot use " + symbols.BinaryOperatorTypeNames[operatorType] + " on string and int")
 		}
@@ -119,6 +121,8 @@ func executeBinaryOperatorOnInt(lhs ExpressionResult, rhs ExpressionResult, oper
 	switch rhs.Type {
 	case String:
 		switch operatorType {
+		case symbols.LTOperator:
+			return ExpressionResult{Bool: lhs.Int < len(rhs.String), Type: Bool}, nil
 		default:
 			return ExpressionResult{}, errors.New("Cannot use " + symbols.BinaryOperatorTypeNames[operatorType] + " on int and string")
 		}

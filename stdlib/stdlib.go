@@ -6,7 +6,7 @@ import (
 )
 
 func LoadStdLibFiles() string {
-	libNames := [1]string{"./stdlib/heap.mr"}
+	libNames := [2]string{"./stdlib/heap.mr", "./stdlib/string.mr"}
 
 	libString := ""
 
