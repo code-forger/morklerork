@@ -77,6 +77,20 @@ call <Int | Int from string> $string$toInt <String | Input String>
 
 This function parses ints in the string, non-numerical characters will be replaced with 0's
 
+## The `$input$` module
+
+This module helps read input in more convenient ways
+
+### Exported Functions
+
+#### $input$readLine
+```morkleRork
+call <String | read line> $heap$init
+# returns the line input, excpluding the new line
+```
+
+This function blocks until the <enter> key is pressed, collecting all keys pressed
+
 ### Future plans the Standard Library
 MorkleRork has a few more tricks up its sleeve that are coming soon, such as:
 * Receive stdin as a string
