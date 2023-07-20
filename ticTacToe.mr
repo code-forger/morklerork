@@ -1,0 +1,164 @@
+# board is 9 heap cells starting at 0
+# victories are 16 heap cells starting at 10
+
+program $getBoardCell :x :y
+    if :x < 0 | 2 < :x | :y < 0 | 2 < :y
+        return -1
+    new :address :y * 3 + :x
+    return [:address]
+
+program $setBoardCell :x :y :value
+    if :x < 0 | 2 < :x | :y < 0 | 2 < :y
+        return
+    if :value != 'x' & :value != 'o' & :value != ' '
+        return
+    new :address :y * 3 + :x
+    = [:address] :value
+
+program $initBoard
+    call $setBoardCell 0 0 ' '
+    call $setBoardCell 1 0 ' '
+    call $setBoardCell 2 0 ' '
+    call $setBoardCell 0 1 ' '
+    call $setBoardCell 1 1 ' '
+    call $setBoardCell 2 1 ' '
+    call $setBoardCell 0 2 ' '
+    call $setBoardCell 1 2 ' '
+    call $setBoardCell 2 2 ' '
+
+program $initVictories
+    = [10] 'xxx------'
+    = [11] '---xxx---'
+    = [12] '------xxx'
+    = [13] 'x--x--x--'
+    = [14] '-x--x--x-'
+    = [15] '--x--x--x'
+    = [16] 'x---x---x'
+    = [17] '--x-x-x--'
+    = [18] 'ooo------'
+    = [19] '---ooo---'
+    = [20] '------ooo'
+    = [21] 'o--o--o--'
+    = [22] '-o--o--o-'
+    = [23] '--o--o--o'
+    = [24] 'o---o---o'
+    = [25] '--o-o-o--'
+
+program $printBoard
+    new :boardIndex 0
+    log [:boardIndex] + '|'
+    = :boardIndex :boardIndex + 1
+    log [:boardIndex] + '|'
+    = :boardIndex :boardIndex + 1
+    log [:boardIndex] + '\n'
+    log '-+-+-\n'
+    = :boardIndex :boardIndex + 1
+    log [:boardIndex] + '|'
+    = :boardIndex :boardIndex + 1
+    log [:boardIndex] + '|'
+    = :boardIndex :boardIndex + 1
+    log [:boardIndex] + '\n'
+    log '-+-+-\n'
+    = :boardIndex :boardIndex + 1
+    log [:boardIndex] + '|'
+    = :boardIndex :boardIndex + 1
+    log [:boardIndex] + '|'
+    = :boardIndex :boardIndex + 1
+    log [:boardIndex] + '\n'
+
+program $askForCoordinate :coordName :team
+    new :isXValid ?false
+    new :xRaw ''
+    new :x -1
+    while :isXValid == ?false
+        log :team + ': Enter a number between 1 and 3 inclusive for the ' + :coordName + ' position of your play: '
+        call :xRaw $input$readLine
+        call :x $string$toInt :xRaw
+        if :x == 1 | :x == 2 | :x == 3
+            = :isXValid ?true
+            = :x :x - 1
+        if :isXValid == ?false
+            log 'The inputted value was not understood, try again \n'
+    return :x
+
+program $doTurn :team
+    new :turnValid ?false
+    while :turnValid == ?false
+        call $printBoard
+        new :x 0
+        call :x $askForCoordinate 'x' :team
+        new :y 0
+        call :y $askForCoordinate 'y' :team
+        new :currentCellValue ' '
+        call :currentCellValue $getBoardCell :x :y
+        if :currentCellValue == ' '
+            call $setBoardCell :x :y :team
+            = :turnValid ?true
+        if :turnValid == ?false
+            log :team + ' chose a non empty cell, try again\n'
+
+program $switchTeam :team
+    if :team == 'x'
+        return 'o'
+    return 'x'
+
+program $makePatternFromBoard
+    new :cellAddress 0
+    new :pattern ''
+    while :cellAddress < 9
+        new :address :cellAddress
+        = :pattern :pattern + [:address]
+        = :cellAddress :cellAddress + 1
+    return :pattern
+
+program $checkPattern :pattern
+    new :cellCount 9
+    new :boardPattern ''
+    call :boardPattern $makePatternFromBoard
+    while 0 < :cellCount
+        = :cellCount :cellCount - 1
+        if :pattern % :cellCount != '-' & :pattern % :cellCount != :boardPattern % :cellCount
+            return ?false
+    return ?true
+
+program $checkVictory
+    new :victoryIndex 10
+    while :victoryIndex < 18
+        new :isVictory ?false
+        call :isVictory $checkPattern [:victoryIndex]
+        if :isVictory
+            return 'x'
+        = :victoryIndex :victoryIndex + 1
+    while :victoryIndex < 26
+        new :isVictory ?false
+        call :isVictory $checkPattern [:victoryIndex]
+        if :isVictory
+            return 'o'
+        = :victoryIndex :victoryIndex + 1
+    return ' '
+
+program $playGame
+    new :playCount 9
+    new :winningTeam ' '
+    new :team 'x'
+    call $initBoard
+    call $initVictories
+    log :team + ' will play first!\n'
+    while 0 < :playCount
+        call $doTurn :team
+        call :winningTeam $checkVictory
+        if :winningTeam != ' '
+            return :winningTeam
+        call :team $switchTeam :team
+        = :playCount :playCount - 1
+        if 0 < :playCount
+            log :team + ' will play next\n'
+    return :winningTeam
+
+new :winner ' '
+call :winner $playGame
+if :winner != ' '
+    log :winner + ' wins!!\n'
+if :winner == ' '
+    log 'Its a Draw\n'
+call $printBoard

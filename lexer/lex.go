@@ -108,6 +108,8 @@ func lexSymbol(symbol string) symbols.Symbol {
 	// CommandSymbols
 	case "log":
 		return symbols.Print{}
+	case "read":
+		return symbols.Read{}
 	case "=":
 		return symbols.Assign{}
 	case "new":

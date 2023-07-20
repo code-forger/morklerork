@@ -42,6 +42,11 @@ type Log struct {
 	Expr   Expression
 }
 
+type Read struct {
+	Indent int
+	Target Expression
+}
+
 type New struct {
 	Indent       int
 	VariableName string

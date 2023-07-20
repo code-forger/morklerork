@@ -98,6 +98,32 @@ func parseLog(logSymbols []symbols.Symbol, indent int) ast.Log {
 	return ast.Log{Expr: expr, Indent: indent}
 }
 
+func parseRead(readSymbols []symbols.Symbol, indent int) ast.Read {
+	var target ast.Expression
+
+	switch targetSymbol := readSymbols[0].(type) {
+	case symbols.VariableName:
+		target = ast.VariableName{Name: targetSymbol.Name}
+		break
+	case symbols.HeapAccess:
+		// Since HeapAccess can have more HeapAccesses inside it needs to be fully parsed
+		parsedHeapAccess, err := parseSingleSymbolExpression(targetSymbol)
+		if err != nil {
+			log.Fatal(err)
+		}
+		target = parsedHeapAccess
+		break
+	default:
+		log.Fatal("The first symbol in a read must be a variable or heap access")
+	}
+
+	if len(readSymbols) != 1 {
+		log.Fatal("Read should only be given 2 symbol")
+	}
+
+	return ast.Read{Target: target, Indent: indent}
+}
+
 func parseAssign(assignSymbols []symbols.Symbol, indent int) ast.Assign {
 	var target ast.Expression
 
@@ -204,6 +230,8 @@ func parseCommand(commandSymbols []symbols.Symbol) (ast.Command, bool, error) {
 	switch commandSymbols[1].(type) {
 	case symbols.Print:
 		return parseLog(commandSymbols[2:], indent), false, nil
+	case symbols.Read:
+		return parseRead(commandSymbols[2:], indent), false, nil
 	case symbols.Assign:
 		return parseAssign(commandSymbols[2:], indent), false, nil
 	case symbols.Define:

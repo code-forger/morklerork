@@ -1,0 +1,7 @@
+new :input 0
+read :input
+log 'input: ' + :input + '\n'
+
+log 'Enter a line: '
+call :input $input$readLine
+log :input + '\n'

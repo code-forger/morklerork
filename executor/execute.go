@@ -1,11 +1,14 @@
 package executor
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"golang.org/x/crypto/ssh/terminal"
 	"log"
 	"morklerork/ast"
 	"morklerork/symbols"
+	"os"
 	"strconv"
 )
 
@@ -264,6 +267,46 @@ func runPrint(print ast.Log, scope scope) {
 	}
 }
 
+func readRune() (rune, error) {
+	state, err := terminal.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		return 0, err
+	}
+
+	r := bufio.NewReader(os.Stdin)
+	ru, _, err := r.ReadRune()
+	terminal.Restore(0, state)
+	return ru, err
+}
+
+func runRead(read ast.Read, scope scope) {
+	rawRune, err := readRune()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	str := ExpressionResult{
+		Type:   String,
+		String: string(rawRune),
+	}
+
+	switch assignTarget := read.Target.(type) {
+	case ast.VariableName:
+		assignInScope(assignTarget.Name, str, scope)
+		break
+	case ast.HeapAccess:
+		targetValue, err := evaluateExpression(assignTarget.IndexExpression, scope)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if targetValue.Type != Int {
+			log.Fatal("tried to access the heap with value that is not an int")
+		}
+		heap[targetValue.Int] = str
+	}
+}
+
 func runAssign(assign ast.Assign, scope scope) {
 	result, err := evaluateExpression(assign.Expr, scope)
 
@@ -389,6 +432,8 @@ func runCommand(command ast.Command, scope scope, programs programs) (Expression
 	switch command := command.(type) {
 	case ast.Log:
 		runPrint(command, scope)
+	case ast.Read:
+		runRead(command, scope)
 	case ast.Assign:
 		runAssign(command, scope)
 	case ast.New:

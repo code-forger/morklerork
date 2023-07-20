@@ -74,7 +74,7 @@ These symbols are 'reserved' by the language, they are all discussed below in th
 MorkleRork has 8 **CommandSymbols** (and therefore only 8 possible **Commands**), 9 **OperatorSymbols**, three types of **LiteralSymbol**, and two types of **UserDefinedSymbols**
 
 #### CommandSymbols
-`log new = if while program call return`
+`log read new = if while program call return`
 
 These are explained below in the `Commands` section
 
@@ -165,6 +165,25 @@ Examples:
 log 5
 log 'hello\n'
 log 'Your Variable Value Is: ' + :var + '\n'
+```
+
+### read
+
+```morklerork
+read <VarableName | HeapAccess>
+```
+
+The read command will read 1 rune from stdin
+
+This command blocks until input is read
+
+This command consumes the input, so if you want to show the character pressed to the user, you must do that yourself
+
+Examples:
+```morklerork
+new :input
+read :input
+log 'you typed: ' + :input
 ```
 
 

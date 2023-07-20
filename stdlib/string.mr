@@ -39,4 +39,3 @@ program $string$toInt :str
         = :num :num + :nextNum * :tens
         = :tens :tens * 10
     return :num
-

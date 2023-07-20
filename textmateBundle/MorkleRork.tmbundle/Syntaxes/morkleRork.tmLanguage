@@ -13,7 +13,7 @@
 	<array>
 		<dict>
 			<key>match</key>
-			<string>\b(log|new|=|if|while|program|call|return)\b</string>
+			<string>\b(log|new|=|if|while|program|call|return|read)\b</string>
 			<key>name</key>
 			<string>keyword.control.untitled</string>
 		</dict>

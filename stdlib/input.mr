@@ -1,0 +1,11 @@
+program $input$readLine
+    new :line ''
+    new :nextChar ''
+    read :nextChar
+    log :nextChar
+    while :nextChar != '\n' & :nextChar != '\r'
+        = :line :line + :nextChar
+        read :nextChar
+        log :nextChar
+    log '\n'
+    return :line

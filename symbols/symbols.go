@@ -10,6 +10,7 @@ type Indent struct {
 }
 
 type Print struct{}
+type Read struct{}
 type Assign struct{}
 type Define struct{}
 type If struct{}
