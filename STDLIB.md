@@ -93,7 +93,6 @@ This function blocks until the <enter> key is pressed, collecting all keys press
 
 ### Future plans the Standard Library
 MorkleRork has a few more tricks up its sleeve that are coming soon, such as:
-* Receive stdin as a string
 * Receive the cli args as a string
 * Read a file as a string
 
